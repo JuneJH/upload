@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>上传</title>
+    <style>
+      .container {
+        width: 300px;
+        min-width: 300px;
+        border: 1px solid #ddd;
+        background-color: #ddd;
+        border-radius: 5px;
+      }
+      .choose-file {
+        margin: 20px;
+        height: 150px;
+        background-color: #fff;
+      }
+      label {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #file {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .show-select-file {
+        padding: 0 20px;
+      }
+      ul {
+        color: #999;
+        padding: 0;
+      }
+      li {
+        list-style: none;
+        text-align: left;
+        display: flex;
+        margin: 5px 0;
+        height: 50px;
+        line-height: 50px;
+      }
+      .name {
+        flex: 2;
+      }
+      .size {
+        flex: 2;
+      }
+      .preview {
+        flex: 2;
+      }
+      img {
+        width: 100%;
+        height: 100%;
+      }
+      .title {
+        display: flex;
+      }
+      .title > div {
+        flex: 2;
+      }
+      .list{
+        height: 100px;
+        line-height: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="choose-file">
+        <label for="file">选择文件</label>
+        <input type="file" id="file" />
+      </div>
+      <div class="show-select-file">
+        <div class="title">
+          <div>文件名字</div>
+          <div>文件大小</div>
+          <div>文件预览</div>
+        </div>
+        <ul id="show-container">
+          <li>暂未选择任何文件</li>
+        </ul>
+      </div>
+    </div>
+    <button class="upload-btn">上传</button>
+    <button class="dowmload-btn">下载</button>
+
+    <div class="show-list">
+      <ul>
+        <li></li>
+      </ul>
+    </div>
+
+    <form method="POST" action="./upload">
+      <input type="file"/>
+      <input type="text" name="filename">
+      <input type="submit" name="submit"/>
+    </form>
+
+    <a href="./download">下载</a>
+
+    <script>
+      let fileList = [];
+      const container = document.getElementById("show-container");
+      const btn = document.getElementsByClassName("upload-btn")[0];
+      const downloadBtn = document.getElementsByClassName("dowmload-btn")[0];
+      let fileDom = document.getElementById("file");
+      fileDom.addEventListener("change", (e) => {
+        fileDom.files[0] && fileList.push(fileDom.files[0]);
+        render(fileList, container);
+      });
+      function createPreviewDom(fileList) {
+        let str = "";
+        if (fileList.length == 0) return `<li>暂未选择任何文件</li>`;
+        fileList.forEach((item) => {
+          console.log(item);
+          const src = URL.createObjectURL(item);
+          str += ` <li>
+            <div class="name">${item.name}</div>
+            <div class="size">${item.size}</div>
+            <div class="preview">
+              <img src="${src}" alt="${item.name}" />
+            </div>
+          </li>`;
+        });
+        return str;
+      }
+
+      function renderDownloadDom(file, dom,filename) {
+        const src = URL.createObjectURL(file);
+        const li = document.createElement("li");
+        li.setAttribute("class", "list");
+        li.innerHTML = `<div class="name">${file.name}</div>
+            <div class="size">${file.size}</div>
+            <div class="preview" style="width:100px">
+              <img src="${src}" alt="${file.name}" />
+            </div>
+            <a href=./download?filename=${filename} download=1.png>下载<a/>
+            `;
+            dom.appendChild(li)
+      }
+
+      function render(fileList, dom) {
+        dom.innerHTML = createPreviewDom(fileList);
+      }
+
+      btn.addEventListener("click", () => {
+        fileList.forEach((item) => {
+          uploadFile(item, () => {
+            fileList = fileList.filter((it) => it !== item);
+            render(fileList, container);
+          });
+        });
+      });
+      /**
+       * ajax上传
+       * 
+       * */
+      function uploadFile(file, callback) {
+        const formData = new FormData();
+        formData.append("imgName", file);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/upload");
+        xhr.send(formData);
+        xhr.onreadystatechange = () => {
+          console.log("上传进度",xhr.upload)
+          if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+              const data = JSON.parse(xhr.responseText);
+              alert(data.message);
+              callback && callback();
+              renderDownloadDom(file, document.getElementsByClassName("show-list")[0],data.filename);
+            } else {
+              alert("上传失败");
+            }
+          }
+        };
+      }
+      downloadBtn.addEventListener("click", () => {
+        download("/download", "get", "", { filename: "acf0ef5f4783340970a0c2793b03af56" });
+      });
+
+
+      function download(url, method, fileName, params) {
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            console.log("数据流",this.response,this == xhr)
+            const blob = new Blob([this.response]);
+            // 检验空文件
+            let length = xhr.getResponseHeader("Content-Length");
+            if (length == 0) {
+              new Vue().$message({
+                type: "error",
+                message: "下载失败，文件不存在",
+              });
+              return;
+            }
+            let fileName4admin = xhr.getResponseHeader("Content-Disposition");
+            console.log(fileName4admin);
+            if (fileName4admin) {
+              fileName = decodeURI(
+                fileName4admin.replace("attachment; filename=", "")
+              );
+            }
+            fileName = fileName.slice(0, 1);
+            fileName = fileName.slice(-1);
+            if ("download" in document.createElement("a")) {
+              // 非IE下载
+              const elink = document.createElement("a");
+              elink.download = fileName;
+              //   elink.style.display = "none";
+              elink.innerText = fileName;
+              elink.href = URL.createObjectURL(blob);
+              document.body.appendChild(elink);
+              elink.click();
+              URL.revokeObjectURL(elink.href); // 释放URL 对象
+              //   document.body.removeChild(elink);
+            } else {
+              // IE10+下载
+              navigator.msSaveBlob(blob, fileName);
+            }
+          }
+        };
+        let paramsStr = "?";
+        Object.keys(params).forEach((ele) => {
+          paramsStr += `${ele}=${params[ele]}&`;
+        });
+        xhr.open(method, url + paramsStr.slice(0, -1));
+        xhr.responseType = "blob";
+        xhr.send(JSON.stringify(params));
+      }
+    </script>
+  </body>
+</html>
