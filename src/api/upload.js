@@ -2,8 +2,6 @@ const express = require('express');
 const path = require("path");
 const multer = require('multer');
 
-
-
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -15,13 +13,9 @@ const storage = multer.diskStorage({
         cb(null, `${file.fieldname}-${Date.now()}${ext}`);
     }
 })
-
 const upload = multer({ storage: storage })
-
 router.post('/', upload.single('imgName'), async function (req, res, next) {
     res.json({message: "ok", url: `/uploads/${req.file.filename}`});
 });
-
-
 
 module.exports = router

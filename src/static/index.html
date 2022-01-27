@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>上传</title>
+    <link rel="stylesheet" type="text/css" href="src/css/index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="choose-file">
+        <label for="file">选择文件</label>
+        <input type="file" id="file" />
+      </div>
+      <div class="show-select-file">
+        <div class="title">
+          <div>文件名字</div>
+          <div>文件大小</div>
+          <div>文件预览</div>
+        </div>
+        <ul id="show-container">
+          <li>暂未选择任何文件</li>
+        </ul>
+      </div>
+    </div>
+    <button class="upload-btn">上传</button>
+    <button class="dowmload-btn">下载</button>
+
+    <div class="show-list">
+      <ul>
+        <li></li>
+      </ul>
+    </div>
+
+    <form method="POST" action="./upload">
+      <input type="file"/>
+      <input type="text" name="filename">
+      <input type="submit" name="submit"/>
+    </form>
+    <a href="./download">下载</a>
+    <script src="./src/js/index.js"></script>
+  </body>
+</html>
